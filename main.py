@@ -5,7 +5,7 @@ def clear_screen():
     # Clears the terminal screen for a clean UI
     os.system('cls' if os.name == 'nt' else 'clear')
 
-def display_ui(round_number, enemy_name, bookbag, current_guess, guessed_letters, guess_history, debug_answer=None):
+def display_ui(round_number, enemy_name, bookbag, current_guess, guess_history, correct_letters, incorrect_letters, debug_answer=None):
     # Clear the screen each time before displaying the UI
     clear_screen()
     
@@ -26,21 +26,16 @@ def display_ui(round_number, enemy_name, bookbag, current_guess, guessed_letters
     print(f"Current Guess:")
     print(' '.join(current_guess) + "\n")
 
-    # Keyboard
-    keyboard_lines = [
-        "Q W E R T Y U I O P",
-        "A S D F G H J K L",
-        "Z X C V B N M"
-    ]
-    for line in keyboard_lines:
-        line_chars = line.split()
-        print(' '.join([char if char.lower() not in guessed_letters else '_' for char in line_chars]))
-    print("\n")
-
     # Guess history
     for guess in guess_history:
         print(' '.join(guess))
-    print("\n")
+    print()
+
+    # Correct letters
+    print("Correct: " + (', '.join(sorted(set(correct_letters))) if correct_letters else "[none]"))
+
+    # Incorrect letters
+    print("Incorrect: " + (', '.join(sorted(set(incorrect_letters))) if incorrect_letters else "[none]"))
 
     # Guess prompt
     player_guess = input("Guess: ")
@@ -104,18 +99,23 @@ round_number = 1
 bookbag = {}
 
 guessed_letters = set()
+correct_letters = []
+incorrect_letters = []
 
 # Loop through 8 rounds
 def game_loop():
-    global round_number, guessed_letters
+    global round_number, guessed_letters, correct_letters, incorrect_letters
     for enemy_name in enemy_sequence:
+        # Reset correct and incorrect letters at the beginning of each round
+        correct_letters = []
+        incorrect_letters = []
+        guessed_letters.clear()
+
         current_guess = ['_'] * 5
         guess_history = [['_', '_', '_', '_', '_'] for _ in range(6)]
 
         # Select the answer for the current enemy
         debug_answer = select_word(enemy_name)
-        if debug_mode:
-            print(f"DEBUG: The selected word is {debug_answer}")
 
         # Trigger book effects before the round
         for book in bookbag.keys():
@@ -141,11 +141,15 @@ def game_loop():
 
         # Display UI for each round (with debug mode option)
         while True:
-            player_guess = display_ui(round_number, enemy_name, bookbag, current_guess, guessed_letters, guess_history, debug_answer if debug_mode else None)
+            player_guess = display_ui(round_number, enemy_name, bookbag, current_guess, guess_history, correct_letters, incorrect_letters, debug_answer if debug_mode else None)
             
             if len(player_guess) != len(current_guess):
                 print("Invalid guess length. Try again.\n")
                 continue
+            
+            # Maintain correct and incorrect letters across all guesses in the round
+            round_correct_letters = set(correct_letters)
+            round_incorrect_letters = set(incorrect_letters)
             
             # Update guessed letters
             guessed_letters.update(player_guess.lower())
@@ -156,13 +160,20 @@ def game_loop():
                     guess_history[i] = list(player_guess.upper())
                     break
             
-            # Update current guess based on correct letters
+            # Update current guess based on correct and incorrect letters
             for i, letter in enumerate(player_guess.lower()):
-                if debug_answer and debug_answer[i].lower() == letter:
+                if letter in debug_answer.lower():
                     current_guess[i] = letter.upper()
+                    round_correct_letters.add(letter)
+                else:
+                    round_incorrect_letters.add(letter)
+            
+            # Update correct and incorrect letters
+            correct_letters = [letter.upper() for letter in round_correct_letters]
+            incorrect_letters = [letter.upper() for letter in round_incorrect_letters]
 
             # Check win condition
-            if '_' not in current_guess:
+            if ''.join(current_guess).lower() == debug_answer.lower():
                 clear_screen()
                 print(f"Congratulations! You've defeated {enemy_name} in Round {round_number}!")
                 
