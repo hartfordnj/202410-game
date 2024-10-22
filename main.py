@@ -77,9 +77,10 @@ def select_word(enemy_name):
 # Function to select a book after winning a round
 def choose_book():
     books = [
-        "BOOK: First Position - 4 in 10 chance FIRST LETTER is revealed", 
+        "BOOK: First Position - 4 in 10 chance FIRST letter is revealed", 
         "BOOK: Last Position - 4 in 10 chance LAST letter is revealed", 
-        "BOOK: Middle Position - 4 in 10 chance MIDDLE letter is revealed"
+        "BOOK: Middle Position - 4 in 10 chance MIDDLE letter is revealed",
+        "BOOK: Spot Vowel - 4 in 10 chance a vowel will be revealed"
     ] + list(bookbag.keys())
     chosen_books = random.sample(books, 2)  # Player gets to choose between two books
     return chosen_books
@@ -119,6 +120,14 @@ def game_loop():
 
         # Trigger book effects before the round
         for book in bookbag.keys():
+            if "BOOK: Spot Vowel" in book:
+                vowels = [ch for ch in debug_answer if ch in 'aeiou']
+                if vowels and random.randint(1, 10) <= 4:  # 4 in 10 chance
+                    revealed_vowel = random.choice(vowels).upper()
+                    correct_letters.append(revealed_vowel)
+                    bookbag[book] = "YES!"
+                else:
+                    bookbag[book] = "NOPE"
             if "BOOK: Position 1" in book:
                 if random.randint(1, 10) <= 4:  # 4 in 10 chance
                     current_guess[0] = debug_answer[0].upper()
