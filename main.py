@@ -81,8 +81,15 @@ def choose_book():
         "BOOK: Last Position - 4 in 10 chance LAST letter is revealed", 
         "BOOK: Middle Position - 4 in 10 chance MIDDLE letter is revealed",
         "BOOK: Spot Vowel - 4 in 10 chance a vowel will be revealed"
-    ] + list(bookbag.keys())
-    chosen_books = random.sample(books, 2)  # Player gets to choose between two books
+    ]
+    # Exclude books that are already in the bookbag
+    available_books = [book for book in books if book not in bookbag]
+    if len(available_books) >= 2:
+        chosen_books = random.sample(available_books, 2)  # Player gets to choose between two books
+    elif len(available_books) == 1:
+        chosen_books = available_books  # Only one book available to choose
+    else:
+        chosen_books = []  # No books available
     return chosen_books
 
 # Initial game setup
@@ -169,9 +176,9 @@ def game_loop():
                     guess_history[i] = list(player_guess.upper())
                     break
             
-            # Update current guess based on correct and incorrect letters
+            # Update current guess based on correct positions only
             for i, letter in enumerate(player_guess.lower()):
-                if letter in debug_answer.lower():
+                if letter == debug_answer[i].lower():
                     current_guess[i] = letter.upper()
                     round_correct_letters.add(letter)
                 else:
@@ -187,8 +194,8 @@ def game_loop():
                 print(f"Congratulations! You've defeated {enemy_name} in Round {round_number}!")
                 
                 # Offer a book reward
-                if len(bookbag) < 5:
-                    new_books = choose_book()
+                new_books = choose_book()
+                if len(new_books) == 2:
                     print(f"""Choose your reward:
 1) {new_books[0]}
 2) {new_books[1]}""")
@@ -197,21 +204,28 @@ def game_loop():
                         bookbag[new_books[0]] = ""
                     elif choice == '2':
                         bookbag[new_books[1]] = ""
+                elif len(new_books) == 1:
+                    print(f"You have received: {new_books[0]}")
+                    bookbag[new_books[0]] = ""
                 else:
+                    print("No books available to choose.")
+                
+                # Offer to replace a book if the bookbag is full
+                if len(bookbag) >= 5:
                     print("Your Bookbag is full! Choose a book to remove to add a new one.")
                     new_books = choose_book()
-                    print(f"""New Books Available:
-1) {new_books[0]}
-2) {new_books[1]}""")
-                    book_to_remove = input("Enter the name of the book to remove or 'none' to skip: ")
-                    if book_to_remove in bookbag:
-                        del bookbag[book_to_remove]
-                        choice = input("Enter 1 or 2 to choose your new book: ").strip()
-                        if choice == '1':
-                            bookbag[new_books[0]] = ""
-                        elif choice == '2':
-                            bookbag[new_books[1]] = ""
-                                
+                    if new_books:
+                        print(f"""New Books Available:
+1) {new_books[0]}""" + (f"\n2) {new_books[1]}" if len(new_books) > 1 else ""))
+                        book_to_remove = input("Enter the name of the book to remove or 'none' to skip: ")
+                        if book_to_remove in bookbag:
+                            del bookbag[book_to_remove]
+                            choice = input("Enter 1 or 2 to choose your new book: ").strip()
+                            if choice == '1':
+                                bookbag[new_books[0]] = ""
+                            elif choice == '2' and len(new_books) > 1:
+                                bookbag[new_books[1]] = ""
+                
                 break
             elif all(guess != ['_', '_', '_', '_', '_'] for guess in guess_history):
                 clear_screen()
