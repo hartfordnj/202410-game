@@ -77,9 +77,9 @@ def select_word(enemy_name):
 # Function to select a book after winning a round
 def choose_book():
     books = [
-        "BOOK: Position 1 - [def] 4 in 10 chance first letter is revealed", 
-        "BOOK: Last Position - [def] 4 in 10 chance last letter is revealed", 
-        "BOOK: Middle Position - [def] 4 in 10 chance middle letter is revealed"
+        "BOOK: First Position - 4 in 10 chance FIRST LETTER is revealed", 
+        "BOOK: Last Position - 4 in 10 chance LAST letter is revealed", 
+        "BOOK: Middle Position - 4 in 10 chance MIDDLE letter is revealed"
     ] + list(bookbag.keys())
     chosen_books = random.sample(books, 2)  # Player gets to choose between two books
     return chosen_books
